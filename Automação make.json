@@ -21,7 +21,7 @@
                 "restore": {
                     "parameters": {
                         "__IMTCONN__": {
-                            "label": "My Microsoft connection (Otavio Custodio <otaviocustodio01@outlook.com>)",
+                            "label": "My Microsoft connection (Otavio Custodio <.......@outlook.com>)",
                             "data": {
                                 "scoped": "true",
                                 "connection": "azure"
