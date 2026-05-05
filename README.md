@@ -42,7 +42,8 @@ Criei uma automação no Make que:
 - Estrutura escalável
 
 ## 📷 Fluxo da automação
-![Fluxo](./fluxo.png)
+ <img width="1356" height="634" alt="fluxo" src="https://github.com/user-attachments/assets/e839f948-8e12-4e91-9534-649d014772d7" />
+
 
 ## 📌 Autor
 Otávio Custódio
