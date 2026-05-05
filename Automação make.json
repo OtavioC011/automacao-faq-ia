@@ -1,0 +1,1167 @@
+{
+    "name": "Integration Microsoft 365 Email (Outlook)",
+    "flow": [
+        {
+            "id": 1,
+            "module": "microsoft-email:listMessages",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 8702398
+            },
+            "mapper": {
+                "folder": "/AQMkADAwATNiZmYAZC03NWNjAC05NGFkLTAwAi0wMAoALgAAA1NySk1iJfhLvI3RO_kr9yIBAErD7E0KOehAttHtE-NshOEAAAIBDAAAAA==",
+                "orderby": "receivedDateTime desc",
+                "limit": "1"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 20
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "My Microsoft connection (Otavio Custodio <otaviocustodio01@outlook.com>)",
+                            "data": {
+                                "scoped": "true",
+                                "connection": "azure"
+                            }
+                        }
+                    },
+                    "expect": {
+                        "folder": {
+                            "mode": "chose",
+                            "path": [
+                                "Caixa de Entrada"
+                            ]
+                        },
+                        "orderby": {
+                            "mode": "chose",
+                            "label": "Received Date Time - Descending"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:azure",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "folder",
+                        "type": "folder",
+                        "label": "Mail Folder"
+                    },
+                    {
+                        "name": "search",
+                        "type": "text",
+                        "label": "Search"
+                    },
+                    {
+                        "name": "orderby",
+                        "type": "select",
+                        "label": "Order by",
+                        "validate": {
+                            "enum": [
+                                "subject asc",
+                                "subject desc",
+                                "createdDateTime asc",
+                                "createdDateTime desc",
+                                "lastModifiedDateTime asc",
+                                "lastModifiedDateTime desc",
+                                "receivedDateTime asc",
+                                "receivedDateTime desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 3,
+            "module": "regexp:HTMLToText",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "html": "{{1.body.content}}",
+                "newline": "lf",
+                "uppercaseHeadings": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "newline": {
+                            "label": "LF (\\n) - Unix/Mac OS X"
+                        }
+                    }
+                },
+                "expect": [
+                    {
+                        "name": "html",
+                        "type": "text",
+                        "label": "HTML"
+                    },
+                    {
+                        "name": "newline",
+                        "type": "select",
+                        "label": "Line break",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "lf",
+                                "crlf",
+                                "cr"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "uppercaseHeadings",
+                        "type": "boolean",
+                        "label": "Uppercase headings",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 4,
+            "module": "groq:createJSONChatCompletion",
+            "version": 1,
+            "parameters": {
+                "__IMTCONN__": 8702496
+            },
+            "mapper": {
+                "model": "llama-3.3-70b-versatile",
+                "systemPrompt": "O JSON deve ter a seguinte estrutura: \n{ \"Categoria\": \"Duvida ou Não duvida\"}",
+                "userMessage": "Você é um assistente de classificação de mensagens do banco Bytebank. Sua tarefa pe ler o conteúdo abaixo e determinar se a mensagem expressa uma dúvida de um cliente ou não .\nResponda apenas com umas das opções:\n\"dúvida\" -  se a mensagem contiver uma pergunta de um cliente ou estiver buscando esclarecimento sobre algo do banco.\n\"não dúvida\" - se a mensagem for apenas uma afirmação, informação, solicitação direta ou outro tipo de conteúdo.\n\nAqui está a mensagem: \n{{3.text}}",
+                "max_tokens": "50"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "My Groq connection",
+                            "data": {
+                                "scoped": "true",
+                                "connection": "groq"
+                            }
+                        }
+                    },
+                    "expect": {
+                        "model": {
+                            "mode": "chose",
+                            "label": "llama-3.3-70b-versatile"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:groq",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "model",
+                        "type": "select",
+                        "label": "Model",
+                        "required": true
+                    },
+                    {
+                        "name": "systemPrompt",
+                        "type": "text",
+                        "label": "System Prompt",
+                        "required": true
+                    },
+                    {
+                        "name": "userMessage",
+                        "type": "text",
+                        "label": "User Message",
+                        "required": true
+                    },
+                    {
+                        "name": "max_tokens",
+                        "type": "number",
+                        "label": "Max tokens returned"
+                    },
+                    {
+                        "name": "temperature",
+                        "type": "number",
+                        "label": "Temperature"
+                    },
+                    {
+                        "name": "top_p",
+                        "type": "number",
+                        "label": "Top P"
+                    },
+                    {
+                        "name": "frequency_penalty",
+                        "type": "number",
+                        "label": "Frequency Penalty"
+                    },
+                    {
+                        "name": "seed",
+                        "type": "number",
+                        "label": "Seed"
+                    }
+                ],
+                "advanced": true
+            }
+        },
+        {
+            "id": 5,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 909,
+                    "y": 4
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 13,
+                            "module": "microsoft-excel:listWorksheetRows",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 8702398
+                            },
+                            "filter": {
+                                "name": "",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{4.result.Categoria}}",
+                                            "o": "text:equal",
+                                            "b": "dúvida"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "select": "legacy",
+                                "emptyRow": true,
+                                "limit": "1",
+                                "selectB": "my",
+                                "workbook": "/Documentos/Perguntas Frequentes - Bytebank.xlsx",
+                                "worksheet": "Planilha1"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1235,
+                                    "y": 213
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "My Microsoft connection (Otavio Custodio <otaviocustodio01@outlook.com>)",
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "azure"
+                                            }
+                                        }
+                                    },
+                                    "expect": {
+                                        "select": {
+                                            "label": "Select from the list"
+                                        },
+                                        "selectB": {
+                                            "label": "My Drive"
+                                        },
+                                        "workbook": {
+                                            "path": [
+                                                "Documentos",
+                                                "Perguntas Frequentes - Bytebank.xlsx"
+                                            ]
+                                        },
+                                        "worksheet": {
+                                            "mode": "chose",
+                                            "label": "Planilha1"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:azure",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "select",
+                                        "type": "select",
+                                        "label": "Select a method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "manually",
+                                                "legacy"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "emptyRow",
+                                        "type": "boolean",
+                                        "label": "Skip All Rows After a Blank Row",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "limit",
+                                        "type": "uinteger",
+                                        "label": "Limit"
+                                    },
+                                    {
+                                        "name": "selectB",
+                                        "type": "select",
+                                        "label": "Choose your OneDrive location",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "my",
+                                                "site",
+                                                "group"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "workbook",
+                                        "type": "file",
+                                        "label": "Workbook",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "worksheet",
+                                        "type": "select",
+                                        "label": "Worksheet",
+                                        "required": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "__IMTLENGTH__",
+                                        "label": "Total number of bundles",
+                                        "type": "uinteger"
+                                    },
+                                    {
+                                        "name": "__IMTINDEX__",
+                                        "label": "Bundle order position",
+                                        "type": "uinteger"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "Row ID"
+                                    },
+                                    {
+                                        "name": "row",
+                                        "type": "collection",
+                                        "label": "Row",
+                                        "spec": [
+                                            {
+                                                "label": "(A): Perguntas",
+                                                "name": "a",
+                                                "type": "collection",
+                                                "spec": [
+                                                    {
+                                                        "name": "formula",
+                                                        "type": "text",
+                                                        "label": "Formula"
+                                                    },
+                                                    {
+                                                        "name": "formulaLocal",
+                                                        "type": "text",
+                                                        "label": "Formula Local"
+                                                    },
+                                                    {
+                                                        "name": "numberFormat",
+                                                        "type": "text",
+                                                        "label": "Number Format"
+                                                    },
+                                                    {
+                                                        "name": "text",
+                                                        "type": "text",
+                                                        "label": "Text"
+                                                    },
+                                                    {
+                                                        "name": "value",
+                                                        "type": "text",
+                                                        "label": "Value"
+                                                    },
+                                                    {
+                                                        "name": "valueType",
+                                                        "type": "text",
+                                                        "label": "Value Type"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "label": "(B): Respostas",
+                                                "name": "b",
+                                                "type": "collection",
+                                                "spec": [
+                                                    {
+                                                        "name": "formula",
+                                                        "type": "text",
+                                                        "label": "Formula"
+                                                    },
+                                                    {
+                                                        "name": "formulaLocal",
+                                                        "type": "text",
+                                                        "label": "Formula Local"
+                                                    },
+                                                    {
+                                                        "name": "numberFormat",
+                                                        "type": "text",
+                                                        "label": "Number Format"
+                                                    },
+                                                    {
+                                                        "name": "text",
+                                                        "type": "text",
+                                                        "label": "Text"
+                                                    },
+                                                    {
+                                                        "name": "value",
+                                                        "type": "text",
+                                                        "label": "Value"
+                                                    },
+                                                    {
+                                                        "name": "valueType",
+                                                        "type": "text",
+                                                        "label": "Value Type"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 14,
+                            "module": "util:TextAggregator",
+                            "version": 1,
+                            "parameters": {
+                                "rowSeparator": "\n",
+                                "feeder": 13
+                            },
+                            "mapper": {
+                                "value": "Pergunta: {{13.row.a.text}}\nResposta: {{13.row.b.text}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1594,
+                                    "y": 285
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "rowSeparator": {
+                                            "label": "New row"
+                                        }
+                                    },
+                                    "extra": {
+                                        "feeder": {
+                                            "label": "Microsoft 365 Excel - List Worksheet Rows [13]"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "rowSeparator",
+                                        "type": "select",
+                                        "label": "Row separator",
+                                        "validate": {
+                                            "enum": [
+                                                "\n",
+                                                "\t",
+                                                "other"
+                                            ]
+                                        }
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "value",
+                                        "type": "text",
+                                        "label": "Text"
+                                    }
+                                ],
+                                "advanced": true
+                            }
+                        },
+                        {
+                            "id": 7,
+                            "module": "groq:createJSONChatCompletion",
+                            "version": 1,
+                            "parameters": {
+                                "__IMTCONN__": 8702496
+                            },
+                            "mapper": {
+                                "model": "llama-3.3-70b-versatile",
+                                "systemPrompt": "O JSON deve ter a seguinte estrutura:\n\n{ \n   \"Categoria\": \"dúvida FAQ ou dúvida - time C\"\n}",
+                                "userMessage": "Você é um assistente que analisa dúvidsas de clientes.\nSua tarefa é verificar se a dúvida pode ser respondida com base em um FAQ fornecido.\nResponda apenas com:\n\n- \"dúvida FAQ\" - se a dúvida pode ser respondida usando o conteúdo do FAQ\n- \"dúvida - time C\" - se a dúvida não pode ser respondida pelo FAQ e exige suporte humano\n\nUse apenas umas dessas duas respostas.\n\nAqui está o conteúdo de referência do FAQ:{{14.text}}\n\n\nAqui esta o conteúdo da mensagem recebida: \n{{3.text}}\n",
+                                "max_tokens": "80"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1894,
+                                    "y": 135
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "My Groq connection",
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "groq"
+                                            }
+                                        }
+                                    },
+                                    "expect": {
+                                        "model": {
+                                            "mode": "chose",
+                                            "label": "llama-3.3-70b-versatile"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:groq",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "model",
+                                        "type": "select",
+                                        "label": "Model",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "systemPrompt",
+                                        "type": "text",
+                                        "label": "System Prompt",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "userMessage",
+                                        "type": "text",
+                                        "label": "User Message",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "max_tokens",
+                                        "type": "number",
+                                        "label": "Max tokens returned"
+                                    },
+                                    {
+                                        "name": "temperature",
+                                        "type": "number",
+                                        "label": "Temperature"
+                                    },
+                                    {
+                                        "name": "top_p",
+                                        "type": "number",
+                                        "label": "Top P"
+                                    },
+                                    {
+                                        "name": "frequency_penalty",
+                                        "type": "number",
+                                        "label": "Frequency Penalty"
+                                    },
+                                    {
+                                        "name": "seed",
+                                        "type": "number",
+                                        "label": "Seed"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 8,
+                            "module": "builtin:BasicRouter",
+                            "version": 1,
+                            "mapper": null,
+                            "metadata": {
+                                "designer": {
+                                    "x": 2181,
+                                    "y": 185
+                                }
+                            },
+                            "routes": [
+                                {
+                                    "flow": [
+                                        {
+                                            "id": 9,
+                                            "module": "groq:createJSONChatCompletion",
+                                            "version": 1,
+                                            "parameters": {
+                                                "__IMTCONN__": 8702496
+                                            },
+                                            "filter": {
+                                                "name": "",
+                                                "conditions": [
+                                                    [
+                                                        {
+                                                            "a": "{{7.result.Categoria}}",
+                                                            "o": "text:equal",
+                                                            "b": "dúvida FAQ"
+                                                        }
+                                                    ]
+                                                ]
+                                            },
+                                            "mapper": {
+                                                "model": "llama-3.3-70b-versatile",
+                                                "systemPrompt": "Seu JSON deve ter essa estrutua: \n\n{\n    \"Texto\": \"texto de resposta\"\n}",
+                                                "userMessage": "Você é um assistente virtual do Banco Bytebank. Sua tarefa é redigir uma resposta educada e clara para a dúvida de um cliente, com base em um FAQ fornecido.\nSiga esta estrutura obrigatória na resposta:\n\n1. Agradecimento pela dúvida enviada (ex: \"Obrigado por entrar em contato com o Banco Bytebank.\")\n2. Resposta à dúvida do cliente com base no conteúdo do FAQ, de forma direta e cordial.\n3. Encerramento simpático, informando que o FAQ está disponível par mais informações e que o banco está à disposição para outras dúvidas.\n\nSeja cordial, mantenha a linguagem formal e clara. Use de HTML para manter a formatação adequada do texto.\n\nAbaixo estão as informações de referência:\n\nFAQ:{{14.text}}\n\n\nMensagem do cliente: \n{{3.text}}\n",
+                                                "max_tokens": "500"
+                                            },
+                                            "metadata": {
+                                                "designer": {
+                                                    "x": 2049,
+                                                    "y": -149
+                                                },
+                                                "restore": {
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "label": "My Groq connection",
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "groq"
+                                                            }
+                                                        }
+                                                    },
+                                                    "expect": {
+                                                        "model": {
+                                                            "mode": "chose",
+                                                            "label": "llama-3.3-70b-versatile"
+                                                        }
+                                                    }
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:groq",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ],
+                                                "expect": [
+                                                    {
+                                                        "name": "model",
+                                                        "type": "select",
+                                                        "label": "Model",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "systemPrompt",
+                                                        "type": "text",
+                                                        "label": "System Prompt",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "userMessage",
+                                                        "type": "text",
+                                                        "label": "User Message",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "max_tokens",
+                                                        "type": "number",
+                                                        "label": "Max tokens returned"
+                                                    },
+                                                    {
+                                                        "name": "temperature",
+                                                        "type": "number",
+                                                        "label": "Temperature"
+                                                    },
+                                                    {
+                                                        "name": "top_p",
+                                                        "type": "number",
+                                                        "label": "Top P"
+                                                    },
+                                                    {
+                                                        "name": "frequency_penalty",
+                                                        "type": "number",
+                                                        "label": "Frequency Penalty"
+                                                    },
+                                                    {
+                                                        "name": "seed",
+                                                        "type": "number",
+                                                        "label": "Seed"
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "id": 11,
+                                            "module": "microsoft-email:createAMessage",
+                                            "version": 2,
+                                            "parameters": {
+                                                "__IMTCONN__": 8702398
+                                            },
+                                            "mapper": {
+                                                "subject": "{{1.subject}}",
+                                                "content": "{{9.result.Texto}}",
+                                                "replyTo": [
+                                                    {
+                                                        "address": "{{1.sender.emailAddress.address}}",
+                                                        "name": "{{1.sender.emailAddress.name}}"
+                                                    }
+                                                ],
+                                                "contentType": "html",
+                                                "singleValueExtendedProperties": {}
+                                            },
+                                            "metadata": {
+                                                "designer": {
+                                                    "x": 2467,
+                                                    "y": -162
+                                                },
+                                                "restore": {
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "label": "My Microsoft connection (Otavio Custodio <otaviocustodio01@outlook.com>)",
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "azure"
+                                                            }
+                                                        }
+                                                    },
+                                                    "expect": {
+                                                        "toRecipients": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "attachments": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "replyTo": {
+                                                            "mode": "chose",
+                                                            "items": [
+                                                                null
+                                                            ]
+                                                        },
+                                                        "ccRecipients": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "bccRecipients": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "importance": {
+                                                            "mode": "chose",
+                                                            "label": "Empty"
+                                                        },
+                                                        "contentType": {
+                                                            "mode": "chose",
+                                                            "label": "HTML"
+                                                        }
+                                                    }
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:azure",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ],
+                                                "expect": [
+                                                    {
+                                                        "name": "toRecipients",
+                                                        "type": "array",
+                                                        "label": "To Recipients",
+                                                        "spec": [
+                                                            {
+                                                                "name": "address",
+                                                                "type": "email",
+                                                                "label": "Email Address",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "name",
+                                                                "type": "text",
+                                                                "label": "Name"
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "name": "subject",
+                                                        "type": "text",
+                                                        "label": "Subject",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "content",
+                                                        "type": "text",
+                                                        "label": "Body Content",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "attachments",
+                                                        "type": "array",
+                                                        "label": "Attachments",
+                                                        "spec": [
+                                                            {
+                                                                "name": "filename",
+                                                                "type": "filename",
+                                                                "label": "File Name",
+                                                                "required": true,
+                                                                "semantic": "file:name"
+                                                            },
+                                                            {
+                                                                "name": "data",
+                                                                "type": "buffer",
+                                                                "label": "Data",
+                                                                "required": true,
+                                                                "semantic": "file:data"
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "name": "replyTo",
+                                                        "type": "array",
+                                                        "label": "Reply To",
+                                                        "spec": [
+                                                            {
+                                                                "name": "address",
+                                                                "type": "email",
+                                                                "label": "Email Address",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "name",
+                                                                "type": "text",
+                                                                "label": "Name"
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "name": "ccRecipients",
+                                                        "type": "array",
+                                                        "label": "CC Recipients",
+                                                        "spec": [
+                                                            {
+                                                                "name": "address",
+                                                                "type": "email",
+                                                                "label": "Email Address",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "name",
+                                                                "type": "text",
+                                                                "label": "Name"
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "name": "bccRecipients",
+                                                        "type": "array",
+                                                        "label": "Bcc Recipients",
+                                                        "spec": [
+                                                            {
+                                                                "name": "address",
+                                                                "type": "email",
+                                                                "label": "Email Address",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "name",
+                                                                "type": "text",
+                                                                "label": "Name"
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        "name": "importance",
+                                                        "type": "select",
+                                                        "label": "Importance",
+                                                        "validate": {
+                                                            "enum": [
+                                                                "Low",
+                                                                "Normal",
+                                                                "High"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "contentType",
+                                                        "type": "select",
+                                                        "label": "Body Content Type",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "html",
+                                                                "text"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "singleValueExtendedProperties",
+                                                        "type": "collection",
+                                                        "label": "Extended MAPI Properties",
+                                                        "spec": [
+                                                            {
+                                                                "name": "sensitivityLabel",
+                                                                "type": "text",
+                                                                "label": "Sensitivity Label"
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "advanced": true
+                                            }
+                                        },
+                                        {
+                                            "id": 12,
+                                            "module": "microsoft-email:moveAMessage",
+                                            "version": 2,
+                                            "parameters": {
+                                                "__IMTCONN__": 8702398
+                                            },
+                                            "mapper": {
+                                                "message": "{{1.id}}",
+                                                "folder": "/AQMkADAwATNiZmYAZC03NWNjAC05NGFkLTAwAi0wMAoALgAAA1NySk1iJfhLvI3RO_kr9yIBAErD7E0KOehAttHtE-NshOEAAfRzH-EAAAA="
+                                            },
+                                            "metadata": {
+                                                "designer": {
+                                                    "x": 2767,
+                                                    "y": -162
+                                                },
+                                                "restore": {
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "label": "My Microsoft connection (Otavio Custodio <otaviocustodio01@outlook.com>)",
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "azure"
+                                                            }
+                                                        }
+                                                    },
+                                                    "expect": {
+                                                        "message": {
+                                                            "mode": "edit"
+                                                        },
+                                                        "folder": {
+                                                            "mode": "chose"
+                                                        }
+                                                    }
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:azure",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ],
+                                                "expect": [
+                                                    {
+                                                        "name": "message",
+                                                        "type": "select",
+                                                        "label": "Email ID",
+                                                        "mode": "edit",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "folder",
+                                                        "type": "folder",
+                                                        "label": "Mail Folder",
+                                                        "required": true
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "flow": [
+                                        {
+                                            "id": 10,
+                                            "module": "microsoft-email:moveAMessage",
+                                            "version": 2,
+                                            "parameters": {
+                                                "__IMTCONN__": 8702398
+                                            },
+                                            "filter": {
+                                                "name": "",
+                                                "conditions": [
+                                                    [
+                                                        {
+                                                            "a": "{{7.result.Categoria}}",
+                                                            "o": "text:equal",
+                                                            "b": "dúvida - time C "
+                                                        }
+                                                    ]
+                                                ]
+                                            },
+                                            "mapper": {
+                                                "message": "{{1.id}}",
+                                                "folder": "/AQMkADAwATNiZmYAZC03NWNjAC05NGFkLTAwAi0wMAoALgAAA1NySk1iJfhLvI3RO_kr9yIBAErD7E0KOehAttHtE-NshOEAAfRzH-MAAAA="
+                                            },
+                                            "metadata": {
+                                                "designer": {
+                                                    "x": 2481,
+                                                    "y": 185
+                                                },
+                                                "restore": {
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "label": "My Microsoft connection (Otavio Custodio <otaviocustodio01@outlook.com>)",
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "azure"
+                                                            }
+                                                        }
+                                                    },
+                                                    "expect": {
+                                                        "message": {
+                                                            "mode": "edit"
+                                                        },
+                                                        "folder": {
+                                                            "mode": "chose"
+                                                        }
+                                                    }
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:azure",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ],
+                                                "expect": [
+                                                    {
+                                                        "name": "message",
+                                                        "type": "select",
+                                                        "label": "Email ID",
+                                                        "mode": "edit",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "folder",
+                                                        "type": "folder",
+                                                        "label": "Mail Folder",
+                                                        "required": true
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 15,
+                            "module": "microsoft-email:moveAMessage",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 8702398
+                            },
+                            "mapper": {
+                                "message": "{{1.id}}",
+                                "folder": "/AQMkADAwATNiZmYAZC03NWNjAC05NGFkLTAwAi0wMAoALgAAA1NySk1iJfhLvI3RO_kr9yIBAErD7E0KOehAttHtE-NshOEAAfRzH-AAAAA="
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1267,
+                                    "y": -210
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "label": "My Microsoft connection (Otavio Custodio <otaviocustodio01@outlook.com>)",
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "azure"
+                                            }
+                                        }
+                                    },
+                                    "expect": {
+                                        "message": {
+                                            "mode": "edit"
+                                        },
+                                        "folder": {
+                                            "mode": "chose"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:azure",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "message",
+                                        "type": "select",
+                                        "label": "Email ID",
+                                        "mode": "edit",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "folder",
+                                        "type": "folder",
+                                        "label": "Mail Folder",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    }
+}
